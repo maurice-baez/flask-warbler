@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 
-from forms import UserAddForm, LoginForm, MessageForm, CsrfOnlyForm
+from forms import UserAddForm, LoginForm, MessageForm, CsrfOnlyForm, EditUserForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -217,6 +217,28 @@ def stop_following(follow_id):
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
+    form = EditUserForm(obj=g.user)
+    
+    if form.validate_on_submit():
+        g.user.username = form.username.data or g.user.username
+        g.user.email = form.email.data or g.user.email
+        g.user.image_url = form.image_url.data or g.user.image_url
+        g.user.header_image_url = form.header_image_url.data or g.user.header_image_url
+        g.user.bio = form.bio.data or g.user.bio
+        password = form.password.data
+        if User.authenticate(g.user.username, password):
+            db.session.commit()
+            return redirect(f"/users/{g.user.id}")
+        
+        else:
+            flash("Error", "danger")
+            return redirect("/")
+
+    return render_template("users/edit.html", form=form)
+        
+    
+   
+        
 
     # IMPLEMENT THIS
 
