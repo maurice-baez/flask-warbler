@@ -119,9 +119,7 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    form = CsrfOnlyForm()
-
-    if form.validate_on_submit():
+    if g.csrf_form.validate_on_submit():
         do_logout()
 
         flash("Successfully logged out", "success")
@@ -220,11 +218,11 @@ def profile():
     form = EditUserForm(obj=g.user)
 
     if form.validate_on_submit():
-        g.user.username = form.username.data or g.user.username
-        g.user.email = form.email.data or g.user.email
-        g.user.image_url = form.image_url.data or g.user.image_url
-        g.user.header_image_url = form.header_image_url.data or g.user.header_image_url
-        g.user.bio = form.bio.data or g.user.bio
+        g.user.username = form.username.data 
+        g.user.email = form.email.data 
+        g.user.image_url = form.image_url.data or "/static/images/default-pic.png"
+        g.user.header_image_url = form.header_image_url.data or "/static/images/warbler-hero.jpg"
+        g.user.bio = form.bio.data
         password = form.password.data
 
         if User.authenticate(g.user.username, password):
@@ -318,7 +316,7 @@ def homepage():
 
     if g.user:
 
-        following_ids = [user.id for user in g.user.following]
+        following_ids = [user.id for user in g.user.following] + g.user.id
 
         messages = (Message
                     .query

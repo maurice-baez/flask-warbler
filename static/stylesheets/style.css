@@ -204,6 +204,10 @@ nav + .container {
   background-position: top center;
 }
 
+/* #header-img {
+  object-fit: contain;
+} */
+
 .full-width {
   width: 100vw;
   margin: 0 -50vw;
