@@ -316,7 +316,8 @@ def homepage():
 
     if g.user:
 
-        following_ids = [user.id for user in g.user.following] + g.user.id
+        following_ids = [user.id for user in g.user.following]
+        following_ids.append(g.user.id)
 
         messages = (Message
                     .query
