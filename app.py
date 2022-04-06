@@ -218,7 +218,7 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
     form = EditUserForm(obj=g.user)
-    
+
     if form.validate_on_submit():
         g.user.username = form.username.data or g.user.username
         g.user.email = form.email.data or g.user.email
@@ -226,21 +226,17 @@ def profile():
         g.user.header_image_url = form.header_image_url.data or g.user.header_image_url
         g.user.bio = form.bio.data or g.user.bio
         password = form.password.data
+
         if User.authenticate(g.user.username, password):
+            db.session.add(g.user)
             db.session.commit()
             return redirect(f"/users/{g.user.id}")
-        
+
         else:
             flash("Error", "danger")
             return redirect("/")
 
     return render_template("users/edit.html", form=form)
-        
-    
-   
-        
-
-    # IMPLEMENT THIS
 
 
 @app.post('/users/delete')
@@ -321,11 +317,16 @@ def homepage():
     """
 
     if g.user:
+
+        following_ids = [user.id for user in g.user.following]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+
 
         return render_template('home.html', messages=messages)
 
