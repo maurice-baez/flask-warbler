@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import Unauthorized
 
 from forms import UserAddForm, LoginForm, MessageForm, CsrfOnlyForm, EditUserForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Like
 
 CURR_USER_KEY = "curr_user"
 
@@ -282,8 +282,8 @@ def messages_add():
 @app.get('/messages/<int:message_id>')
 def messages_show(message_id):
     """Show a message."""
-
     msg = Message.query.get(message_id)
+
     return render_template('messages/show.html', message=msg)
 
 
@@ -303,7 +303,40 @@ def messages_destroy(message_id):
 
 
 ##############################################################################
+#handling like routes
+
+@app.post('/messages/<int:message_id>/like')
+def like_a_message(message_id):
+    """ likes the selected message """
+    form = g.csrf_form
+
+    msg = Message.query.get(message_id)
+
+    if form.validate_on_submit():
+        g.user.like_message(msg)
+        return redirect(f"/messages/{message_id}")
+
+    raise Unauthorized()
+
+
+@app.post('/messages/<int:message_id>/unlike')
+def unlike_a_message(message_id):
+    """ unlikes the selected message """
+    form = g.csrf_form
+
+    msg = Message.query.get(message_id)
+
+    if form.validate_on_submit():
+        g.user.unlike_message(msg)
+        return redirect(f"/messages/{message_id}")
+
+    raise Unauthorized()
+
+
+
+##############################################################################
 # Homepage and error pages
+
 
 
 @app.get('/')
@@ -325,7 +358,6 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-
 
         return render_template('home.html', messages=messages)
 

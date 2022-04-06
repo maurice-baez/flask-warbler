@@ -74,6 +74,9 @@ class User(db.Model):
         nullable=False,
     )
 
+    ## like columns thats linked to the specific message id 
+    # everytime you click on the heart it makes post request that either update user.likes.append(new_liked_message) or user.likes.pop(unliked_message) 
+
     messages = db.relationship('Message', order_by='Message.timestamp.desc()')
 
     followers = db.relationship(
@@ -90,6 +93,14 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
+    likes = db.relationship('Message', 
+                                secondary= "likes",
+                                backref="users",
+                                order_by='Message.timestamp.desc()')
+
+
+
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
@@ -104,6 +115,24 @@ class User(db.Model):
 
         found_user_list = [user for user in self.following if user == other_user]
         return len(found_user_list) == 1
+
+
+    def like_message(self, message):
+        if not self.has_liked_message(message):
+            like = Like(user_id=self.id, message_id=message.id)
+            db.session.add(like)
+            db.session.commit()
+
+    def unlike_message(self, message):
+        if self.has_liked_message(message):
+            Like.query.filter_by(user_id=self.id,message_id=message.id).delete()
+            db.session.commit()
+    
+    def has_liked_message(self,message):
+        return Like.query.filter(Like.user_id == self.id,
+                                Like.message_id == message.id).count()>0
+
+    
 
     @classmethod
     def signup(cls, username, email, password, image_url):
@@ -173,6 +202,32 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
+
+
+class Like(db.Model):
+    """ a like table to join messages and users """
+
+    __tablename__ = 'likes'
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    message_id = db.Column(
+        db.Integer,
+        db.ForeignKey('messages.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    
+
+
+
+
+
+
 
 
 def connect_db(app):
