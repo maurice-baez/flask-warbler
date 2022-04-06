@@ -50,7 +50,8 @@
             <img src="{{ g.user.image_url }}" alt="{{ g.user.username }}">
           </a>
         </li>
-        <li><a href="/messages/new">New Message</a></li>
+        <li>
+          <a href="/messages/new" class="btn btn-outline-secondary btn-sm">New Message</a></li>
         <li>
 
           {% if "curr_user" in session %}
