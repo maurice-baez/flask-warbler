@@ -8,7 +8,7 @@
 import os
 from unittest import TestCase
 from sqlalchemy.exc import IntegrityError
-
+from flask import Flask, session
 from models import db, User, Message, Follows
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -40,8 +40,10 @@ class UserViewsTestCase(TestCase):
 
         u1 = User.signup("testuser", "test@test.com", "HASHED_PASSWORD","/static/images/default-pic.png")
         u2 = User.signup("test2user", "test2@test.com", "HASHED_PASSWORD2","/static/images/default-pic.png")
+        u3 = User.signup("test3user", "test3@test.com", "HASHED_PASSWORD3","/static/images/default-pic.png")
+        u4 = User.signup("test4user", "test4@test.com", "HASHED_PASSWORD4","/static/images/default-pic.png")
 
-        db.session.add_all([u1,u2])
+        db.session.add_all([u1,u2,u3,u4])
         db.session.commit()
 
         m1 = Message(text = "test message 1", user_id=u1.id)
@@ -50,10 +52,18 @@ class UserViewsTestCase(TestCase):
         db.session.add_all([m1, m2])
         db.session.commit()
 
-        self.u1 = u1
-        self.u2 = u2
-        self.m1 = m1
-        self.m2 = m2
+        self.u1_id = u1.id
+        self.u2_id = u2.id
+        self.u3_id = u3.id
+        self.u4_id = u4.id
+        self.m1_id = m1.id
+        self.m2_id = m2.id
+
+        u2.followers.append(u4)
+        u2.followers.append(u3)
+        u2.following.append(u4)
+        u2.following.append(u3)
+        db.session.commit()
 
 
     def tearDown(self):
@@ -64,26 +74,121 @@ class UserViewsTestCase(TestCase):
         """Test list of users"""
 
         with app.test_client() as client:
+            u1 = User.query.get(self.u1_id)
 
             resp = client.get("/users")
             html = resp.get_data(as_text=True)
             self.assertEqual(resp.status_code, 200)
-            self.assertIn(f"@{self.u1.username}",html)
+            self.assertIn(f"@{u1.username}",html)
 
 
     def test_login(self):
         """Test successful login"""
         with app.test_client() as client:
+            u1 = User.query.get(self.u1_id)
 
             url = "/login"
             resp = client.post(url,
-                                data={"username": self.u1.username, "password": "HASHED_PASSWORD"},
+                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
                                 follow_redirects = True)
 
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn(f"Hello, {self.u1.username}", html)
+            self.assertIn(f"Hello, {u1.username}", html)
+
+    def test_follower_pages(self):
+        """Test if you can see the follower pages for any user """
+
+        with app.test_client() as client:
+            u1 = User.query.get(self.u1_id)
+            u2 = User.query.get(self.u2_id)
+            u3 = User.query.get(self.u3_id)
+            u4 = User.query.get(self.u4_id)
+
+            url = "/login"
+            resp = client.post(url,
+                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
+                                follow_redirects = True)
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+            url = f"/users/{u2.id}/followers"
+            resp = client.get(url)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"@{u3.username}",html)
+            self.assertIn(f"@{u4.username}",html)
+
+    def test_following_pages(self):
+        """Test if you can see the following pages for any user """
+
+        with app.test_client() as client:
+            u1 = User.query.get(self.u1_id)
+            u2 = User.query.get(self.u2_id)
+            u3 = User.query.get(self.u3_id)
+            u4 = User.query.get(self.u4_id)
+
+            url = "/login"
+            resp = client.post(url,
+                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
+                                follow_redirects = True)
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+            url = f"/users/{u2.id}/following"
+            resp = client.get(url)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"@{u3.username}",html)
+            self.assertIn(f"@{u4.username}",html)
+
+    def test_following_while_logged_out(self):
+        """Test to see if you are disallowed from visiting 
+        a users following/follower page while logged out"""
+        u2 = User.query.get(self.u2_id)
+
+        url = f"/users/{u2.id}/following"
+        with app.test_client() as client:
+            resp = client.get(url,follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+        self.assertIn("Access unauthorized",html)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_followers_while_logged_out(self):
+        """Test to see if you are disallowed from visiting 
+        a users following/follower page while logged out"""
+        u2 = User.query.get(self.u2_id)
+
+        url = f"/users/{u2.id}/followers"
+        with app.test_client() as client:
+            resp = client.get(url,follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+        self.assertIn("Access unauthorized",html)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_add_message(self):
+        u1 = User.query.get(self.u1_id)
+        with app.test_client() as client:
+            url = "/login"
+            resp = client.post(url,
+                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
+                                follow_redirects = True)
+
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+            resp = client.post('/messages/new',
+                                data={"text" : "testing123"},follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("testing123",html)
+
 
 
 
