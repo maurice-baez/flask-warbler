@@ -30,7 +30,7 @@ db.create_all()
 
 
 class UserModelTestCase(TestCase):
-    """Test views for messages."""
+    """Test views for users"""
 
     def setUp(self):
         """Create test client, add sample data."""
@@ -39,16 +39,9 @@ class UserModelTestCase(TestCase):
         Message.query.delete()
         Follows.query.delete()
 
-        u1 = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
-        )
-        u2 = User(
-            email="test2@test.com",
-            username="test2user",
-            password="HASHED_PASSWORD2"
-        )
+        u1 = User.signup("testuser", "test@test.com", "HASHED_PASSWORD","/static/images/default-pic.png")
+        u2 = User.signup("test2user", "test2@test.com", "HASHED_PASSWORD2","/static/images/default-pic.png")
+
         db.session.add_all([u1,u2])
         db.session.commit()
 
@@ -64,16 +57,6 @@ class UserModelTestCase(TestCase):
     def test_user_model(self):
         """Does basic model work?"""
 
-        # u = User(
-        #     email="test@test.com",
-        #     username="testuser",
-        #     password="HASHED_PASSWORD"
-        # )
-
-        # db.session.add(u)
-        # db.session.commit()
-
-        # User should have no messages & no followers
         self.assertEqual(len(self.u1.messages), 0)
         self.assertEqual(len(self.u1.followers), 0)
 
@@ -104,22 +87,36 @@ class UserModelTestCase(TestCase):
     def test_signup(self):
         """Does User.signup successfully create a new user """
 
-        new_user = User.signup("testing1", "testing1@gmail.com", "123456", "/static/images/default-pic.png")
+        User.signup("testing1", "testing1@gmail.com", "123456", "/static/images/default-pic.png")
         self.assertTrue(User.query.filter_by(username="testing1").one_or_none())
 
 
     def test_fail_signup(self):
         """Tests failed signups based on uniqueness constraints"""
-        new_user2 = User.signup("testuser", "test@test.com","123456", "/static/images/default-pic.png")
+
+        User.signup("testuser", "test@test.com","123456", "/static/images/default-pic.png")
         with self.assertRaises(IntegrityError):
             db.session.commit()
 
-        
+
+    def test_user_authentication(self):
+        """Test that user authentication works properly"""
+
+        self.assertTrue(User.authenticate("testuser", "HASHED_PASSWORD"))
 
 
-    
-    
-    
+    def test_user_authentication_fail(self):
+        """Test that user authentication fails given invalid username/password"""
+
+        #incorrect username
+        self.assertFalse(User.authenticate("testsdfsduser", "HASHED_PASSWORD"))
+
+        #incorrect password
+        self.assertFalse(User.authenticate("testuser", "HASHED_PASSWORDsdfsdfsdfsdc"))
+
+
+
+
 
 
 

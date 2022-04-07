@@ -78,7 +78,7 @@ class User(db.Model):
     # everytime you click on the heart it makes post request that either update user.likes.append(new_liked_message) or user.likes.pop(unliked_message)
 
     messages = db.relationship('Message',
-                                secondary='likes',
+                                cascade='all, delete',
                                 order_by='Message.timestamp.desc()')
 
     followers = db.relationship(
@@ -98,6 +98,7 @@ class User(db.Model):
     likes = db.relationship('Message',
                                 secondary= "likes",
                                 backref="users",
+                                cascade='all, delete',
                                 order_by='Message.timestamp.desc()')
 
 
@@ -202,7 +203,7 @@ class Message(db.Model):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey('users.id', ondelete='CASCADE'),
+        db.ForeignKey('users.id'),
         nullable=False,
     )
 
