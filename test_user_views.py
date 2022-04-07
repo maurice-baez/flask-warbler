@@ -10,7 +10,6 @@ from unittest import TestCase
 from sqlalchemy.exc import IntegrityError
 
 from models import db, User, Message, Follows
-
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
 # before we import our app, since that will have already
@@ -20,8 +19,8 @@ os.environ['DATABASE_URL'] = "postgresql:///warbler_test"
 
 # Now we can import app
 
-from app import app, do_login
-
+from app import app
+app.config['WTF_CSRF_ENABLED'] = False
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
@@ -56,20 +55,37 @@ class UserViewsTestCase(TestCase):
         self.m1 = m1
         self.m2 = m2
 
-        do_login(self.u1)
-
-        self.client = app.test_client()
-
 
     def tearDown(self):
 
         db.session.rollback()
 
     def test_list_users(self):
+        """Test list of users"""
+
         with app.test_client() as client:
+
             resp = client.get("/users")
             html = resp.get_data(as_text=True)
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f"@{self.u1.username}",html)
 
-            
+
+    def test_login(self):
+        """Test successful login"""
+        with app.test_client() as client:
+
+            url = "/login"
+            resp = client.post(url,
+                                data={"username": self.u1.username, "password": "HASHED_PASSWORD"},
+                                follow_redirects = True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"Hello, {self.u1.username}", html)
+
+
+
+
+
