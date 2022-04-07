@@ -556,3 +556,7 @@ p.card-bio {
 .like-unlike {
   z-index: 10;
 }
+
+.heart:hover {
+  background-color: pink;
+}
