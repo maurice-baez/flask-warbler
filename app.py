@@ -218,8 +218,8 @@ def profile():
     form = EditUserForm(obj=g.user)
 
     if form.validate_on_submit():
-        g.user.username = form.username.data 
-        g.user.email = form.email.data 
+        g.user.username = form.username.data
+        g.user.email = form.email.data
         g.user.image_url = form.image_url.data or "/static/images/default-pic.png"
         g.user.header_image_url = form.header_image_url.data or "/static/images/warbler-hero.jpg"
         g.user.bio = form.bio.data
@@ -314,7 +314,7 @@ def like_a_message(message_id):
 
     if form.validate_on_submit():
         g.user.like_message(msg)
-        return redirect(f"/messages/{message_id}")
+        return redirect(request.referrer)
 
     raise Unauthorized()
 
@@ -328,9 +328,17 @@ def unlike_a_message(message_id):
 
     if form.validate_on_submit():
         g.user.unlike_message(msg)
-        return redirect(f"/messages/{message_id}")
+        return redirect(request.referrer)
 
     raise Unauthorized()
+
+@app.get('/users/<int:user_id>/likes')
+def get_and_display_liked_messages(user_id):
+    """Get users liked messages from db and display on page"""
+
+    messages = g.user.likes
+
+    return render_template('users/likes.html', messages=messages)
 
 
 

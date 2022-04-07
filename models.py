@@ -74,10 +74,12 @@ class User(db.Model):
         nullable=False,
     )
 
-    ## like columns thats linked to the specific message id 
-    # everytime you click on the heart it makes post request that either update user.likes.append(new_liked_message) or user.likes.pop(unliked_message) 
+    ## like columns thats linked to the specific message id
+    # everytime you click on the heart it makes post request that either update user.likes.append(new_liked_message) or user.likes.pop(unliked_message)
 
-    messages = db.relationship('Message', order_by='Message.timestamp.desc()')
+    messages = db.relationship('Message',
+                                secondary='likes',
+                                order_by='Message.timestamp.desc()')
 
     followers = db.relationship(
         "User",
@@ -93,7 +95,7 @@ class User(db.Model):
         secondaryjoin=(Follows.user_being_followed_id == id)
     )
 
-    likes = db.relationship('Message', 
+    likes = db.relationship('Message',
                                 secondary= "likes",
                                 backref="users",
                                 order_by='Message.timestamp.desc()')
@@ -118,21 +120,24 @@ class User(db.Model):
 
 
     def like_message(self, message):
+        """"""
         if not self.has_liked_message(message):
             like = Like(user_id=self.id, message_id=message.id)
             db.session.add(like)
             db.session.commit()
 
     def unlike_message(self, message):
+        """"""
         if self.has_liked_message(message):
             Like.query.filter_by(user_id=self.id,message_id=message.id).delete()
             db.session.commit()
-    
+
     def has_liked_message(self,message):
+        """"""
         return Like.query.filter(Like.user_id == self.id,
                                 Like.message_id == message.id).count()>0
 
-    
+
 
     @classmethod
     def signup(cls, username, email, password, image_url):
@@ -220,14 +225,6 @@ class Like(db.Model):
         db.ForeignKey('messages.id', ondelete="cascade"),
         primary_key=True,
     )
-
-    
-
-
-
-
-
-
 
 
 def connect_db(app):

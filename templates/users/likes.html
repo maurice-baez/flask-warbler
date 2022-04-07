@@ -56,21 +56,20 @@
           <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
           <p>{{ msg.text }}</p>
 
-        </div>
-        <div>
-        {% if g.user.has_liked_message(msg) %}
-        <form action="/messages/{{msg.id}}/unlike" method="POST" class="like-unlike">
-          {{ g.csrf_form.hidden_tag() }}
-          <button><i class="bi bi-heart-fill text-danger"></i></button>
-        </form>
-        {% else %}
+          {% if g.user.has_liked_message(msg) %}
+          <form action="/messages/{{msg.id}}/unlike" method="POST">
+            {{ g.csrf_form.hidden_tag() }}
+            <button><i class="bi bi-heart-fill text-danger"></i></button>
+          </form>
+          {% else %}
 
-        <form action="/messages/{{msg.id}}/like" method="POST" class="like-unlike">
-          {{ g.csrf_form.hidden_tag() }}
-          <button><i class="bi bi-heart text-danger"></i></button>
-        </form>
-        {% endif %}
-      </div>
+          <form action="/messages/{{msg.id}}/like" method="POST">
+            {{ g.csrf_form.hidden_tag() }}
+            <button><i class="bi bi-heart text-danger"></i></button>
+          </form>
+          {% endif %}
+
+        </div>
       </li>
       {% endfor %}
     </ul>
