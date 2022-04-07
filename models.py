@@ -120,22 +120,22 @@ class User(db.Model):
 
 
     def like_message(self, message):
-        """"""
+        """Has this message been liked by the user? If not, add relationship to likes table and commit"""
         if not self.has_liked_message(message):
             like = Like(user_id=self.id, message_id=message.id)
             db.session.add(like)
             db.session.commit()
 
     def unlike_message(self, message):
-        """"""
+        """Has this message been liked by the user? If so, remove relationship from likes table"""
         if self.has_liked_message(message):
             Like.query.filter_by(user_id=self.id,message_id=message.id).delete()
             db.session.commit()
 
     def has_liked_message(self,message):
-        """"""
+        """Check likes table for relationship between user and message"""
         return Like.query.filter(Like.user_id == self.id,
-                                Like.message_id == message.id).count()>0
+                                Like.message_id == message.id).count() > 0
 
 
 
@@ -210,7 +210,7 @@ class Message(db.Model):
 
 
 class Like(db.Model):
-    """ a like table to join messages and users """
+    """ a like table to join liked messages and users """
 
     __tablename__ = 'likes'
 
