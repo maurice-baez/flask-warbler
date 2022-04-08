@@ -263,14 +263,12 @@ def messages_add():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
-    if not g.user:
-        flash("Access unauthorized.", "danger")
-        return redirect("/")
-
     form = MessageForm()
 
     if form.validate_on_submit():
+
         msg = Message(text=form.text.data)
+
         g.user.messages.append(msg)
         db.session.commit()
 
@@ -291,11 +289,14 @@ def messages_show(message_id):
 def messages_destroy(message_id):
     """Delete a message."""
 
-    if not g.user:
+    msg = Message.query.get(message_id)
+    user = msg.user_id
+
+    if  g.user.id != user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get(message_id)
+
     db.session.delete(msg)
     db.session.commit()
 

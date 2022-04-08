@@ -52,10 +52,13 @@ class UserViewsTestCase(TestCase):
         db.session.add_all([m1, m2])
         db.session.commit()
 
+        #Test Users
         self.u1_id = u1.id
         self.u2_id = u2.id
         self.u3_id = u3.id
         self.u4_id = u4.id
+
+        #Test Messages
         self.m1_id = m1.id
         self.m2_id = m2.id
 
@@ -100,16 +103,12 @@ class UserViewsTestCase(TestCase):
     def test_follower_pages(self):
         """Test if you can see the follower pages for any user """
 
-        with app.test_client() as client:
-            u1 = User.query.get(self.u1_id)
-            u2 = User.query.get(self.u2_id)
-            u3 = User.query.get(self.u3_id)
-            u4 = User.query.get(self.u4_id)
+        u1 = User.query.get(self.u1_id)
+        u2 = User.query.get(self.u2_id)
+        u3 = User.query.get(self.u3_id)
+        u4 = User.query.get(self.u4_id)
 
-            url = "/login"
-            resp = client.post(url,
-                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
-                                follow_redirects = True)
+        with app.test_client() as client:
             with client.session_transaction() as change_session:
                 change_session["curr_user"] = u1.id
 
@@ -124,16 +123,13 @@ class UserViewsTestCase(TestCase):
     def test_following_pages(self):
         """Test if you can see the following pages for any user """
 
-        with app.test_client() as client:
-            u1 = User.query.get(self.u1_id)
-            u2 = User.query.get(self.u2_id)
-            u3 = User.query.get(self.u3_id)
-            u4 = User.query.get(self.u4_id)
 
-            url = "/login"
-            resp = client.post(url,
-                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
-                                follow_redirects = True)
+        u1 = User.query.get(self.u1_id)
+        u2 = User.query.get(self.u2_id)
+        u3 = User.query.get(self.u3_id)
+        u4 = User.query.get(self.u4_id)
+
+        with app.test_client() as client:
             with client.session_transaction() as change_session:
                 change_session["curr_user"] = u1.id
 
@@ -145,8 +141,9 @@ class UserViewsTestCase(TestCase):
             self.assertIn(f"@{u3.username}",html)
             self.assertIn(f"@{u4.username}",html)
 
+
     def test_following_while_logged_out(self):
-        """Test to see if you are disallowed from visiting 
+        """Test to see if you are disallowed from visiting
         a users following/follower page while logged out"""
         u2 = User.query.get(self.u2_id)
 
@@ -158,8 +155,9 @@ class UserViewsTestCase(TestCase):
         self.assertIn("Access unauthorized",html)
         self.assertEqual(resp.status_code, 200)
 
+
     def test_followers_while_logged_out(self):
-        """Test to see if you are disallowed from visiting 
+        """Test to see if you are disallowed from visiting
         a users following/follower page while logged out"""
         u2 = User.query.get(self.u2_id)
 
@@ -171,23 +169,6 @@ class UserViewsTestCase(TestCase):
         self.assertIn("Access unauthorized",html)
         self.assertEqual(resp.status_code, 200)
 
-    def test_add_message(self):
-        u1 = User.query.get(self.u1_id)
-        with app.test_client() as client:
-            url = "/login"
-            resp = client.post(url,
-                                data={"username": u1.username, "password": "HASHED_PASSWORD"},
-                                follow_redirects = True)
-
-            with client.session_transaction() as change_session:
-                change_session["curr_user"] = u1.id
-
-            resp = client.post('/messages/new',
-                                data={"text" : "testing123"},follow_redirects = True)
-            html = resp.get_data(as_text=True)
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("testing123",html)
 
 
 
