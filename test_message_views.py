@@ -8,7 +8,7 @@
 import os
 from unittest import TestCase
 
-from models import db, connect_db, Message, User, Follows
+from models import db, connect_db, Message, User, Follows, Like
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -137,3 +137,74 @@ class MessageViewTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Access unauthorized",html)
+
+    def test_like_a_message(self):
+        """Test you can like a message """
+        
+        u1 = User.query.get(self.u1_id)
+
+        with app.test_client() as client:
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+        resp = client.post(f'/messages/{self.m1_id}/like',
+                                follow_redirects = True)
+        html = resp.get_data(as_text=True)
+        self.assertEqual(len(Like.query.all()),1)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_unlike_a_message(self):
+        """Test you can unlike a message """
+        
+        u1 = User.query.get(self.u1_id)
+
+        with app.test_client() as client:
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+        resp = client.post(f'/messages/{self.m1_id}/like',
+                                follow_redirects = True)
+        resp = client.post(f'/messages/{self.m1_id}/unlike',
+                                follow_redirects = True)
+        html = resp.get_data(as_text=True)
+        self.assertEqual(len(Like.query.all()),0)
+        self.assertEqual(resp.status_code, 200)
+
+
+
+
+    ################## Test the Get requests ############################
+
+    def test_add_message_route(self):
+        """Test to see that you get the add message page"""
+
+        u1 = User.query.get(self.u1_id)
+
+        with app.test_client() as client:
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+            resp = client.get("/messages/new")
+            html = resp.get_data(as_text=True)
+
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Add my message!",html)
+
+    def test_messages_show(self):
+        """Test to see that a message display"""
+
+        u1 = User.query.get(self.u1_id)
+
+        with app.test_client() as client:
+            with client.session_transaction() as change_session:
+                change_session["curr_user"] = u1.id
+
+            resp = client.get(f"/messages/{self.m1_id}")
+            html = resp.get_data(as_text=True)
+
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("test message 1",html)
+
+    
