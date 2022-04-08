@@ -312,7 +312,7 @@ class UserViewsTestCase(TestCase):
             self.assertIn(f"@{u2.username}",html)
             self.assertEqual(resp.status_code, 200)
 
-    def test_show_following(self):
+    def test_show_followers(self):
         """Test if it shows the list of followers for this user"""
 
         u2 = User.query.get(self.u2_id)

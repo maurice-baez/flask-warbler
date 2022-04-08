@@ -142,7 +142,7 @@ class MessageViewTestCase(TestCase):
         """Test you can like a message """
         
         u1 = User.query.get(self.u1_id)
-
+        likes = u1.likes
         with app.test_client() as client:
             with client.session_transaction() as change_session:
                 change_session["curr_user"] = u1.id
@@ -150,6 +150,7 @@ class MessageViewTestCase(TestCase):
         resp = client.post(f'/messages/{self.m1_id}/like',
                                 follow_redirects = True)
         html = resp.get_data(as_text=True)
+
         self.assertEqual(len(Like.query.all()),1)
         self.assertEqual(resp.status_code, 200)
 
