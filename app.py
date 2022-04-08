@@ -393,3 +393,12 @@ def add_header(response):
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
     response.cache_control.no_store = True
     return response
+
+##############################################################################
+# Error Handling
+
+@app.errorhandler(404)
+def page_not_found(evt):
+    """ Handle a 404 error and display custom error page """
+
+    return render_template("404.html"), 404
