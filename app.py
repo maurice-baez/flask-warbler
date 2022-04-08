@@ -263,6 +263,10 @@ def messages_add():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     form = MessageForm()
 
     if form.validate_on_submit():
