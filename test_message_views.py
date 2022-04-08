@@ -121,16 +121,14 @@ class MessageViewTestCase(TestCase):
             self.assertNotIn("test message 1", html)
 
 
-    def test_add_message_to_other_user(self):
-        """Test that a user can't post a message to another users account"""
+    def test_delete_message_of_other_user(self):
+        """Test that a user can't delete a message from another users account"""
 
         u1 = User.query.get(self.u1_id)
 
-        #Login user
         with app.test_client() as client:
             with client.session_transaction() as change_session:
                 change_session["curr_user"] = u1.id
-
 
             resp = client.post(f'/messages/{self.m3_id}/delete',
                                 follow_redirects = True)

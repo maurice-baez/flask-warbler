@@ -280,6 +280,7 @@ def messages_add():
 @app.get('/messages/<int:message_id>')
 def messages_show(message_id):
     """Show a message."""
+
     msg = Message.query.get(message_id)
 
     return render_template('messages/show.html', message=msg)
