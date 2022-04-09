@@ -285,7 +285,7 @@ def messages_add():
 def messages_show(message_id):
     """Show a message."""
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
 
     return render_template('messages/show.html', message=msg)
 
@@ -294,7 +294,7 @@ def messages_show(message_id):
 def messages_destroy(message_id):
     """Delete a message."""
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
     user = msg.user_id
 
     if  g.user.id != user:
